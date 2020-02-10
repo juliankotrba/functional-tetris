@@ -33,40 +33,39 @@ initBoard = array (0,11) [ (0, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,
 type Position = (Int, Int)
 type Positions = [Position]
 
-data Tetromino = I Positions | O Positions| T Positions| J Positions| L Positions| S Positions| Z Positions deriving (Show, Eq, Ord)
+data TetrominoType = I | O| T | J | L | S | Z deriving (Show, Eq, Ord)
+
+data Tetromino = Tetromino 
+  { tetrominoType :: TetrominoType
+  , positions :: Positions 
+  } deriving (Show, Eq) 
 
 instance Enum Tetromino where
-  toEnum 0 = I $ []
-  toEnum 1 = O $ []
-  toEnum 2 = T $ []
-  toEnum 3 = J $ []
-  toEnum 4 = L $ []
-  toEnum 5 = S $ []
-  toEnum 6 = Z $ []
+  toEnum 0 = defaultI
+  toEnum 1 = defaultO
+  toEnum 2 = defaultT
+  toEnum 3 = defaultJ
+  toEnum 4 = defaultL
+  toEnum 5 = defaultS
+  toEnum 6 = defaultZ
 
-  fromEnum (I _) = 0
-  fromEnum (O _) = 1
-  fromEnum (T _) = 2 
-  fromEnum (J _) = 3
-  fromEnum (L _) = 4
-  fromEnum (S _) = 5
-  fromEnum (Z _) = 6
+  fromEnum _ = 0 -- TODO
 
-defaultI = I [(0,0), (1,0), (2,0), (3,0)]
-defaultO = O [(0,0), (1,0), (0,1), (1,1)]
-defaultT = T [(1,0), (0,1), (1,1), (2,1)]
-defaultJ = J [(2,0), (0,1), (1,1), (2,1)]
-defaultL = L [(0,0), (0,1), (1,1), (2,1)]
-defaultS = S [(1,0), (2,0), (0,1), (1,1)]
-defaultZ = Z [(0,0), (1,0), (1,1), (2,1)]
+defaultI = Tetromino I [(0,0), (1,0), (2,0), (3,0)]
+defaultO = Tetromino O [(0,0), (1,0), (0,1), (1,1)]
+defaultT = Tetromino T [(1,0), (0,1), (1,1), (2,1)]
+defaultJ = Tetromino J [(2,0), (0,1), (1,1), (2,1)]
+defaultL = Tetromino L [(0,0), (0,1), (1,1), (2,1)]
+defaultS = Tetromino S [(1,0), (2,0), (0,1), (1,1)]
+defaultZ = Tetromino Z [(0,0), (1,0), (1,1), (2,1)]
 
 data Move = RotateR | RotateL | MoveLeft | MoveRight deriving (Show)
 
 data TetrisGame = TetrisGame
   { tetromino :: Tetromino
-    , board :: Board 
-    , tGenerator :: StdGen
-    , move :: Maybe Move
+  , board :: Board 
+  , tGenerator :: StdGen
+  , move :: Maybe Move
   } deriving (Show)
 
 newBoard = TetrisGame defaultI initBoard (mkStdGen 0) Nothing
@@ -112,24 +111,11 @@ leftRotation :: Position -> Position
 leftRotation (x,y) = (-1*y, x)
 
 down :: Tetromino -> Tetromino
-down t = case t of 
-    I ps ->  I $ map (\(x,y) -> (x, y+1)) ps
-    O ps ->  O $ map (\(x,y) -> (x, y+1)) ps
-    T ps ->  T $ map (\(x,y) -> (x, y+1)) ps
-    J ps ->  J $ map (\(x,y) -> (x, y+1)) ps
-    L ps ->  L $ map (\(x,y) -> (x, y+1)) ps
-    S ps ->  S $ map (\(x,y) -> (x, y+1)) ps
-    Z ps ->  Z $ map (\(x,y) -> (x, y+1)) ps
-
-getPositions :: Tetromino -> Positions
-getPositions t = case t of 
-    I ps -> ps
-    O ps -> ps
-    T ps -> ps
-    J ps -> ps
-    L ps -> ps
-    S ps -> ps
-    Z ps -> ps
+down tetromino = 
+  let
+    postions = positions tetromino
+  in 
+    tetromino { positions = map (\(x,y) -> (x, y+1)) postions}
 
 -- output helpers
 
@@ -143,7 +129,7 @@ boardToString b = let
   in unlines $ map lineToString list2d
 
 drawTetrominoToBoard :: Board -> Tetromino -> Board
-drawTetrominoToBoard b t = drawTetrominoToBoardHelper b $ getPositions t 
+drawTetrominoToBoard b t = drawTetrominoToBoardHelper b $ positions t 
 
 drawTetrominoToBoardHelper :: Board -> Positions -> Board
 drawTetrominoToBoardHelper b [] = b
