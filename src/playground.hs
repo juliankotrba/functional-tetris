@@ -10,6 +10,8 @@ import Data.List
 import Data.Array
 import Data.List.Split
 import Data.Maybe
+import System.IO
+import System.Timeout
 
 data FieldState = EMPTY | FULL deriving (Eq, Show)
 
@@ -68,7 +70,7 @@ data TetrisGame = TetrisGame
   , move :: Maybe Move
   } deriving (Show)
 
-newBoard = TetrisGame defaultI initBoard (mkStdGen 0) Nothing
+newGame = TetrisGame defaultS initBoard (mkStdGen 0) Nothing
 
 spawnTetromino :: State TetrisGame ()
 spawnTetromino = do
@@ -77,7 +79,7 @@ spawnTetromino = do
         put (currentState { tGenerator = gen', tetromino = toEnum rn } )
         return ()
         
-moveTetromino :: State TetrisGame ()
+moveTetromino :: StateT TetrisGame IO ()
 moveTetromino = do
         currentState <- get
         case (move currentState) of
@@ -88,23 +90,25 @@ moveTetromino = do
           Just RotateL -> put (currentState { tetromino = rotateL $ tetromino currentState, move = Nothing } )
           Just MoveDown -> put (currentState { tetromino = down $ tetromino currentState, move = Nothing } )
 
-resolveTurn :: State TetrisGame ()  
+resolveTurn :: StateT TetrisGame IO ()  
 resolveTurn = do
     currentState <- get
-    put (currentState { move = Just MoveDown } ) 
     moveTetromino
-    currentState <- get
-    put (currentState { move = Just MoveRight } ) 
-    moveTetromino
+    --currentState <- get
+    --put (currentState { move = Just MoveDown } ) 
+    --moveTetromino
+    --currentState <- get
+    --put (currentState { move = Just MoveRight } ) 
+    --moveTetromino
     return ()
 
-run = runState resolveTurn-- newBoard
+runTurn = execStateT resolveTurn-- newBoard
 
 -- tetrimino helpers
 
 -- https://keisan.casio.com/exec/system/1223522781
 rightRotation :: Position -> Position
-rightRotation (x,y) = (y*1, -x)
+rightRotation (x,y) = (y*1, x)
 
 leftRotation :: Position -> Position
 leftRotation (x,y) = (-1*y, x)
@@ -139,7 +143,7 @@ drawGame game = let
   b = drawTetrominoToBoard (board game) t
   lineSize = length $ elems $ b!0
   list2d = chunksOf lineSize $ concat $ map elems $ elems b
-  in unlines $ map lineToString list2d
+  in (unlines $ map lineToString list2d) ++ "\n"
 
 drawTetrominoToBoard :: Board -> Tetromino -> Board
 drawTetrominoToBoard b t = drawTetrominoToBoardHelper b $ positions t 
@@ -155,5 +159,18 @@ drawTetrominoToBoardHelper b ((x,y):xs) = let
 -- main
 
 main = do
-  putStr $ drawGame $ snd $ run newBoard
-  putStr "Hello World"
+  gameLoop newGame
+  
+gameLoop :: TetrisGame -> IO ()
+gameLoop game = do
+  inputChar <- getChar
+  newGame <- runTurn game { move = charToMove inputChar}
+  putStr $ drawGame newGame
+  gameLoop newGame
+
+charToMove :: Char -> Maybe Move
+charToMove 'w' = Just RotateR
+charToMove 'a' = Just MoveLeft
+charToMove 's' = Just MoveDown
+charToMove 'd' = Just MoveRight
+charToMove _ = Nothing
