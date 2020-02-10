@@ -59,7 +59,7 @@ defaultL = Tetromino L [(0,0), (0,1), (1,1), (2,1)]
 defaultS = Tetromino S [(1,0), (2,0), (0,1), (1,1)]
 defaultZ = Tetromino Z [(0,0), (1,0), (1,1), (2,1)]
 
-data Move = RotateR | RotateL | MoveLeft | MoveRight deriving (Show)
+data Move = RotateR | RotateL | MoveLeft | MoveRight | MoveDown deriving (Show)
 
 data TetrisGame = TetrisGame
   { tetromino :: Tetromino
@@ -76,30 +76,29 @@ spawnTetromino = do
         let (rn, gen') = randomR (0,6) $ tGenerator currentState
         put (currentState { tGenerator = gen', tetromino = toEnum rn } )
         return ()
-
-moveTetrominoDown :: State TetrisGame ()
-moveTetrominoDown = do
-        currentState <- get
-        put (currentState { tetromino = down (tetromino currentState)} )
-        return () 
         
 moveTetromino :: State TetrisGame ()
 moveTetromino = do
         currentState <- get
         case (move currentState) of
           Nothing -> return ()
-          Just MoveLeft   -> return ()
-          Just MoveRight  -> return ()
-          Just RotateR    -> return ()
-          Just RotateL    -> return ()
+          Just MoveLeft -> put (currentState { tetromino = left $ tetromino currentState, move = Nothing } )
+          Just MoveRight -> put (currentState { tetromino = right $ tetromino currentState, move = Nothing } )
+          Just RotateR -> put (currentState { tetromino = rotateR $ tetromino currentState, move = Nothing } )
+          Just RotateL -> put (currentState { tetromino = rotateL $ tetromino currentState, move = Nothing } )
+          Just MoveDown -> put (currentState { tetromino = down $ tetromino currentState, move = Nothing } )
 
 resolveTurn :: State TetrisGame ()  
 resolveTurn = do
     currentState <- get
-    moveTetrominoDown
+    put (currentState { move = Just MoveDown } ) 
+    moveTetromino
+    currentState <- get
+    put (currentState { move = Just MoveRight } ) 
+    moveTetromino
     return ()
 
-run = runState resolveTurn -- newBoard
+run = runState resolveTurn-- newBoard
 
 -- tetrimino helpers
 
@@ -109,6 +108,18 @@ rightRotation (x,y) = (y*1, -x)
 
 leftRotation :: Position -> Position
 leftRotation (x,y) = (-1*y, x)
+
+rotateR :: Tetromino -> Tetromino
+rotateR tetromino = tetromino { positions = map rightRotation $ positions tetromino }
+
+rotateL :: Tetromino -> Tetromino
+rotateL tetromino = tetromino { positions = map leftRotation $ positions tetromino }
+
+left :: Tetromino -> Tetromino -- TODO: Check bounds
+left tetromino = tetromino { positions = map (\(x,y) -> (x-1,y)) $ positions tetromino }
+
+right :: Tetromino -> Tetromino -- TODO: Check bounds
+right tetromino = tetromino { positions = map (\(x,y) -> (x+1,y)) $ positions tetromino }
 
 down :: Tetromino -> Tetromino
 down tetromino = 
@@ -122,10 +133,12 @@ down tetromino =
 lineToString :: [FieldState] -> String
 lineToString fss = intercalate "" $ map (\fs -> if fs == FULL then "X" else ".") fss
 
-boardToString :: Board -> String
-boardToString b = let
+drawGame :: TetrisGame -> String
+drawGame game = let
+  t = tetromino game
+  b = drawTetrominoToBoard (board game) t
   lineSize = length $ elems $ b!0
-  list2d = chunksOf lineSize $ concat $ map elems $ elems b 
+  list2d = chunksOf lineSize $ concat $ map elems $ elems b
   in unlines $ map lineToString list2d
 
 drawTetrominoToBoard :: Board -> Tetromino -> Board
@@ -142,6 +155,5 @@ drawTetrominoToBoardHelper b ((x,y):xs) = let
 -- main
 
 main = do
-  putStr "Hello World"
-  print $ snd $ run newBoard
+  putStr $ drawGame $ snd $ run newBoard
   putStr "Hello World"
