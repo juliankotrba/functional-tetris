@@ -106,15 +106,26 @@ runTurn = execStateT resolveTurn-- newBoard
 
 -- tetrimino helpers
 
--- https://keisan.casio.com/exec/system/1223522781
-rightRotation :: Position -> Position
-rightRotation (x,y) = (y*1, x)
+pivot :: TetrominoType -> Int
+pivot t = case t of
+    I -> 4
+    O -> 2
+    T -> 3
+    J -> 3
+    L -> 3
+    S -> 3
+    Z -> 3
+
+type Pivot = Int
+
+rightRotation :: Position -> Pivot -> Position
+rightRotation (x,y) pivot = (1 - y - pivot - 2, x)
 
 leftRotation :: Position -> Position
 leftRotation (x,y) = (-1*y, x)
 
 rotateR :: Tetromino -> Tetromino
-rotateR tetromino = tetromino { positions = map rightRotation $ positions tetromino }
+rotateR t = t { positions = map (\(x,y) -> (y - (1- (y - ((pivot $ tetrominoType t) - 2))), x)) $ positions t }
 
 rotateL :: Tetromino -> Tetromino
 rotateL tetromino = tetromino { positions = map leftRotation $ positions tetromino }
@@ -160,7 +171,7 @@ drawTetrominoToBoardHelper b ((x,y):xs) = let
 
 main = do
   gameLoop newGame
-  
+
 gameLoop :: TetrisGame -> IO ()
 gameLoop game = do
   inputChar <- getChar
