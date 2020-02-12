@@ -53,15 +53,17 @@ instance Enum Tetromino where
 
   fromEnum _ = 0 -- TODO
 
-defaultI = Tetromino I [(0,0), (1,0), (2,0), (3,0)]
+-- default tetrominos
+-- the rotation point of each tetromino is placed at index 0
+defaultI = Tetromino I [(1,0), (0,0), (2,0), (3,0)]
 defaultO = Tetromino O [(0,0), (1,0), (0,1), (1,1)]
-defaultT = Tetromino T [(1,0), (0,1), (1,1), (2,1)]
-defaultJ = Tetromino J [(2,0), (0,1), (1,1), (2,1)]
-defaultL = Tetromino L [(0,0), (0,1), (1,1), (2,1)]
-defaultS = Tetromino S [(1,0), (2,0), (0,1), (1,1)]
-defaultZ = Tetromino Z [(0,0), (1,0), (1,1), (2,1)]
+defaultT = Tetromino T [(1,1), (1,0), (0,1), (2,1)]
+defaultJ = Tetromino J [(1,1), (2,0), (0,1), (2,1)]
+defaultL = Tetromino L [(1,1), (0,0), (0,1), (2,1)]
+defaultS = Tetromino S [(1,1), (1,0), (2,0), (0,1)]
+defaultZ = Tetromino Z [(1,1), (0,0), (1,0), (2,1)]
 
-data Move = RotateR | RotateL | MoveLeft | MoveRight | MoveDown deriving (Show)
+data Move = RotateR | MoveLeft | MoveRight | MoveDown deriving (Show)
 
 data TetrisGame = TetrisGame
   { tetromino :: Tetromino
@@ -70,7 +72,7 @@ data TetrisGame = TetrisGame
   , move :: Maybe Move
   } deriving (Show)
 
-newGame = TetrisGame defaultS initBoard (mkStdGen 0) Nothing
+newGame = TetrisGame defaultT initBoard (mkStdGen 0) Nothing
 
 spawnTetromino :: State TetrisGame ()
 spawnTetromino = do
@@ -87,19 +89,12 @@ moveTetromino = do
           Just MoveLeft -> put (currentState { tetromino = left $ tetromino currentState, move = Nothing } )
           Just MoveRight -> put (currentState { tetromino = right $ tetromino currentState, move = Nothing } )
           Just RotateR -> put (currentState { tetromino = rotateR $ tetromino currentState, move = Nothing } )
-          Just RotateL -> put (currentState { tetromino = rotateL $ tetromino currentState, move = Nothing } )
           Just MoveDown -> put (currentState { tetromino = down $ tetromino currentState, move = Nothing } )
 
 resolveTurn :: StateT TetrisGame IO ()  
 resolveTurn = do
     currentState <- get
     moveTetromino
-    --currentState <- get
-    --put (currentState { move = Just MoveDown } ) 
-    --moveTetromino
-    --currentState <- get
-    --put (currentState { move = Just MoveRight } ) 
-    --moveTetromino
     return ()
 
 runTurn = execStateT resolveTurn-- newBoard
@@ -116,25 +111,27 @@ pivot t = case t of
     S -> 3
     Z -> 3
 
-type Pivot = Int
+type RotationPoint = Position
 
-rightRotation :: Position -> Pivot -> Position
-rightRotation (x,y) pivot = (1 - y - pivot - 2, x)
-
-leftRotation :: Position -> Position
-leftRotation (x,y) = (-1*y, x)
+rightRotation :: Position -> RotationPoint -> Position
+rightRotation (x,y) (rx, ry) = 
+  let 
+    nx = (x - rx) * (-1) -- normalized x
+    ny = (y - ry) * (-1) -- normalized y
+  in ((-ny*(-1))+rx, (nx*(-1))+ry)
 
 rotateR :: Tetromino -> Tetromino
-rotateR t = t { positions = map (\(x,y) -> (y - (1- (y - ((pivot $ tetrominoType t) - 2))), x)) $ positions t }
+rotateR t = 
+  let
+    ps = positions t
+    rotationPoint = ps !! 0 -- the first element is the rotation point
+  in t { positions = map (\p -> rightRotation p rotationPoint) ps }
 
-rotateL :: Tetromino -> Tetromino
-rotateL tetromino = tetromino { positions = map leftRotation $ positions tetromino }
-
-left :: Tetromino -> Tetromino -- TODO: Check bounds
-left tetromino = tetromino { positions = map (\(x,y) -> (x-1,y)) $ positions tetromino }
-
-right :: Tetromino -> Tetromino -- TODO: Check bounds
+right :: Tetromino -> Tetromino -- TODO: Check bounds, wall kicks
 right tetromino = tetromino { positions = map (\(x,y) -> (x+1,y)) $ positions tetromino }
+
+left :: Tetromino -> Tetromino -- TODO: Check bounds, wall kicks
+left tetromino = tetromino { positions = map (\(x,y) -> (x-1,y)) $ positions tetromino }
 
 down :: Tetromino -> Tetromino
 down tetromino = 
