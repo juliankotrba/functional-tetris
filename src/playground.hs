@@ -28,7 +28,7 @@ initBoard = array (0,11) [ (0, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,
   , (8, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (9, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (10, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
-  , (11, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
+  , (11, array (0,4) [(0,FULL), (1,FULL), (2,FULL), (3,FULL), (4,FULL)])
   ] :: Board
 --[ [ EMPTY | j <- [1..10] ] | i <- [1..20] ]
 
@@ -66,7 +66,7 @@ defaultZ = Tetromino Z [(1,1), (0,0), (1,0), (2,1)]
 data Move = RotateR | MoveLeft | MoveRight | MoveDown deriving (Show)
 
 data TetrisGame = TetrisGame
-  { tetromino :: Tetromino
+  { tetromino :: Tetromino -- Maybe Tetromino to know when new tetromino needs to be spawned
   , board :: Board 
   , tGenerator :: StdGen
   , move :: Maybe Move
@@ -171,10 +171,16 @@ main = do
 
 gameLoop :: TetrisGame -> IO ()
 gameLoop game = do
-  inputChar <- getChar
-  newGame <- runTurn game { move = charToMove inputChar}
-  putStr $ drawGame newGame
-  gameLoop newGame
+  maybeInputChar <- timeout 1000000 getChar
+  let input = inputToMove maybeInputChar
+  updatedGame <- runTurn game { move = input}
+  putStr $ drawGame updatedGame
+  gameLoop updatedGame
+
+inputToMove :: Maybe Char -> Maybe Move -- TODO: Maybe Move is weird here
+inputToMove mi = case mi of
+    Just i -> charToMove i
+    Nothing -> charToMove 's'
 
 charToMove :: Char -> Maybe Move
 charToMove 'w' = Just RotateR
