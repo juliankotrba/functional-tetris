@@ -63,16 +63,16 @@ defaultL = Tetromino L [(1,1), (0,0), (0,1), (2,1)]
 defaultS = Tetromino S [(1,1), (1,0), (2,0), (0,1)]
 defaultZ = Tetromino Z [(1,1), (0,0), (1,0), (2,1)]
 
-data Move = RotateR | MoveLeft | MoveRight | MoveDown deriving (Show)
+data Move = RotateR | MoveLeft | MoveRight | MoveDown | NoMove deriving (Show)
 
 data TetrisGame = TetrisGame
   { tetromino :: Tetromino -- Maybe Tetromino to know when new tetromino needs to be spawned
   , board :: Board 
   , tGenerator :: StdGen
-  , move :: Maybe Move
+  , move :: Move
   } deriving (Show)
 
-newGame = TetrisGame defaultT initBoard (mkStdGen 0) Nothing
+newGame = TetrisGame defaultT initBoard (mkStdGen 0) NoMove
 
 spawnTetromino :: State TetrisGame ()
 spawnTetromino = do
@@ -85,11 +85,11 @@ moveTetromino :: StateT TetrisGame IO ()
 moveTetromino = do
         currentState <- get
         case (move currentState) of
-          Nothing -> return ()
-          Just MoveLeft -> put (currentState { tetromino = left $ tetromino currentState, move = Nothing } )
-          Just MoveRight -> put (currentState { tetromino = right $ tetromino currentState, move = Nothing } )
-          Just RotateR -> put (currentState { tetromino = rotateR $ tetromino currentState, move = Nothing } )
-          Just MoveDown -> put (currentState { tetromino = down $ tetromino currentState, move = Nothing } )
+          NoMove -> return ()
+          MoveLeft -> put (currentState { tetromino = left $ tetromino currentState, move = NoMove } )
+          MoveRight -> put (currentState { tetromino = right $ tetromino currentState, move = NoMove } )
+          RotateR -> put (currentState { tetromino = rotateR $ tetromino currentState, move = NoMove } )
+          MoveDown -> put (currentState { tetromino = down $ tetromino currentState, move = NoMove } )
 
 resolveTurn :: StateT TetrisGame IO ()  
 resolveTurn = do
@@ -177,14 +177,14 @@ gameLoop game = do
   putStr $ drawGame updatedGame
   gameLoop updatedGame
 
-inputToMove :: Maybe Char -> Maybe Move -- TODO: Maybe Move is weird here
+inputToMove :: Maybe Char -> Move
 inputToMove mi = case mi of
     Just i -> charToMove i
     Nothing -> charToMove 's'
 
-charToMove :: Char -> Maybe Move
-charToMove 'w' = Just RotateR
-charToMove 'a' = Just MoveLeft
-charToMove 's' = Just MoveDown
-charToMove 'd' = Just MoveRight
-charToMove _ = Nothing
+charToMove :: Char -> Move
+charToMove 'w' = RotateR
+charToMove 'a' = MoveLeft
+charToMove 's' = MoveDown
+charToMove 'd' = MoveRight
+charToMove _ = NoMove
