@@ -127,7 +127,7 @@ resolveTurn = do
     spawnIfNeeded
     return ()
 
-runTurn = execStateT resolveTurn-- newBoard
+runTurn = execStateT resolveTurn
 
 -- tetrimino helpers
 
