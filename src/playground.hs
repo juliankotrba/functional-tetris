@@ -22,7 +22,7 @@ initBoard = array (0,11) [ (0, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,
   , (2, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (3, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (4, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
-  , (5, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
+  , (5, array (0,4) [(0,FULL), (1,FULL), (2,FULL), (3,FULL), (4,FULL)])
   , (6, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (7, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (8, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
@@ -35,7 +35,7 @@ initBoard = array (0,11) [ (0, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,
 type Position = (Int, Int)
 type Positions = [Position]
 
-data TetrominoType = I | O| T | J | L | S | Z deriving (Show, Eq, Ord)
+data TetrominoType = I | O | T | J | L | S | Z deriving (Show, Eq, Ord)
 
 data Tetromino = Tetromino 
   { tetrominoType :: TetrominoType
@@ -84,12 +84,31 @@ spawnTetromino = do
 moveTetromino :: StateT TetrisGame IO ()
 moveTetromino = do
         currentState <- get
+        let t = tetromino currentState
+        let b = board currentState
         case (move currentState) of
           NoMove -> return ()
-          MoveLeft -> put (currentState { tetromino = left $ tetromino currentState, move = NoMove } )
-          MoveRight -> put (currentState { tetromino = right $ tetromino currentState, move = NoMove } )
-          RotateR -> put (currentState { tetromino = rotateR $ tetromino currentState, move = NoMove } )
-          MoveDown -> put (currentState { tetromino = down $ tetromino currentState, move = NoMove } )
+          MoveLeft -> put (currentState { tetromino = left t, move = NoMove } )
+          MoveRight -> put (currentState { tetromino = right t, move = NoMove } )
+          RotateR -> put (currentState { tetromino = rotateR t, move = NoMove } )
+          MoveDown -> put $ tryMovingDown currentState t b
+
+-- Tries to move a tetromino down
+-- If a tetromino cannot move down because of a full position on the board the tetromino gets placed on the board
+tryMovingDown :: TetrisGame -> Tetromino -> Board -> TetrisGame
+tryMovingDown game t b =
+  let
+    updatedTetromino = down t
+  in if (anyFull b (positions updatedTetromino)) 
+    then game { board = drawTetrominoToBoard b t, tetromino = updatedTetromino, move = NoMove }  -- TODO: remove tetromino       
+    else game { tetromino = updatedTetromino, move = NoMove }          
+
+anyFull :: Board -> Positions -> Bool
+anyFull board ps = any isAnyFull ps where
+  isAnyFull p = isFull board p          
+
+isFull :: Board -> Position -> Bool
+isFull board (x,y) = board ! y ! x == FULL            
 
 resolveTurn :: StateT TetrisGame IO ()  
 resolveTurn = do
