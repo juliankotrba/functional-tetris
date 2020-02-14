@@ -1,7 +1,6 @@
 {- TODOs:
-
-Better data structure for tetromino. eg records with type and positions because every tetromino has positions
-
+ - Check if left or right move can be done
+ - Wall flips  
 -}
 
 import Control.Monad.State
@@ -17,7 +16,8 @@ data FieldState = EMPTY | FULL deriving (Eq, Show)
 
 type Board = Array Int (Array Int FieldState) --[[FieldState]]
 
-initBoard = array (0,11) [ (0, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
+initBoard = array (0,11) 
+  [ (0, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (1, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (2, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (3, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
@@ -173,7 +173,7 @@ down tetromino =
 -- output helpers
 
 lineToString :: [FieldState] -> String
-lineToString fss = intercalate "" $ map (\fs -> if fs == FULL then "X" else ".") fss
+lineToString fss = intercalate "" $ map (\fs -> if fs == FULL then "X" else " ") fss
 
 drawGame :: TetrisGame -> String
 drawGame game = let
