@@ -22,7 +22,7 @@ initBoard = array (0,11) [ (0, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,
   , (2, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (3, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (4, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
-  , (5, array (0,4) [(0,FULL), (1,FULL), (2,FULL), (3,FULL), (4,FULL)])
+  , (5, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (6, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (7, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (8, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
@@ -66,32 +66,42 @@ defaultZ = Tetromino Z [(1,1), (0,0), (1,0), (2,1)]
 data Move = RotateR | MoveLeft | MoveRight | MoveDown | NoMove deriving (Show)
 
 data TetrisGame = TetrisGame
-  { tetromino :: Tetromino -- Maybe Tetromino to know when new tetromino needs to be spawned
+  { tetromino :: Maybe Tetromino -- Maybe Tetromino to know when new tetromino needs to be spawned
   , board :: Board 
   , tGenerator :: StdGen
   , move :: Move
   } deriving (Show)
 
-newGame = TetrisGame defaultT initBoard (mkStdGen 0) NoMove
+newGame = TetrisGame (Just defaultT) initBoard (mkStdGen 0) NoMove
 
-spawnTetromino :: State TetrisGame ()
+spawnIfNeeded :: StateT TetrisGame IO ()
+spawnIfNeeded = do
+  currentState <- get
+  let mt = tetromino currentState
+  case mt of 
+    Just t -> return ()
+    Nothing -> spawnTetromino  
+
+spawnTetromino :: StateT TetrisGame IO ()
 spawnTetromino = do
         currentState <- get
         let (rn, gen') = randomR (0,6) $ tGenerator currentState
-        put (currentState { tGenerator = gen', tetromino = toEnum rn } )
+        put (currentState { tGenerator = gen', tetromino = Just $ toEnum rn } )
         return ()
         
 moveTetromino :: StateT TetrisGame IO ()
 moveTetromino = do
         currentState <- get
-        let t = tetromino currentState
+        let mt = tetromino currentState
         let b = board currentState
-        case (move currentState) of
-          NoMove -> return ()
-          MoveLeft -> put (currentState { tetromino = left t, move = NoMove } )
-          MoveRight -> put (currentState { tetromino = right t, move = NoMove } )
-          RotateR -> put (currentState { tetromino = rotateR t, move = NoMove } )
-          MoveDown -> put $ tryMovingDown currentState t b
+        case mt of 
+          Nothing -> return ()
+          Just t -> case (move currentState) of
+            NoMove -> return ()
+            MoveLeft -> put (currentState { tetromino = Just $ left t, move = NoMove } )
+            MoveRight -> put (currentState { tetromino = Just $ right t, move = NoMove } )
+            RotateR -> put (currentState { tetromino = Just $ rotateR t, move = NoMove } )
+            MoveDown -> put $ tryMovingDown currentState t b
 
 -- Tries to move a tetromino down
 -- If a tetromino cannot move down because of a full position on the board the tetromino gets placed on the board
@@ -100,8 +110,8 @@ tryMovingDown game t b =
   let
     updatedTetromino = down t
   in if (anyFull b (positions updatedTetromino)) 
-    then game { board = drawTetrominoToBoard b t, tetromino = updatedTetromino, move = NoMove }  -- TODO: remove tetromino       
-    else game { tetromino = updatedTetromino, move = NoMove }          
+    then game { board = drawTetrominoToBoard b t, tetromino = Nothing, move = NoMove } 
+    else game { tetromino = Just updatedTetromino, move = NoMove }          
 
 anyFull :: Board -> Positions -> Bool
 anyFull board ps = any isAnyFull ps where
@@ -114,6 +124,7 @@ resolveTurn :: StateT TetrisGame IO ()
 resolveTurn = do
     currentState <- get
     moveTetromino
+    spawnIfNeeded
     return ()
 
 runTurn = execStateT resolveTurn-- newBoard
@@ -166,8 +177,10 @@ lineToString fss = intercalate "" $ map (\fs -> if fs == FULL then "X" else ".")
 
 drawGame :: TetrisGame -> String
 drawGame game = let
-  t = tetromino game
-  b = drawTetrominoToBoard (board game) t
+  mt = tetromino game
+  b = case mt of 
+    Just t -> drawTetrominoToBoard (board game) t
+    Nothing -> board game
   lineSize = length $ elems $ b!0
   list2d = chunksOf lineSize $ concat $ map elems $ elems b
   in (unlines $ map lineToString list2d) ++ "\n"
