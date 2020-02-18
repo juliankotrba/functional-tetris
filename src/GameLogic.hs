@@ -44,8 +44,8 @@ moveTetromino = do
           Nothing -> return ()
           Just t -> case (move currentState) of
             NoMove -> return ()
-            MoveLeft -> put (currentState { tetromino = Just $ left t, move = NoMove } )
-            MoveRight -> put (currentState { tetromino = Just $ right t, move = NoMove } )
+            MoveLeft -> put $ tryLeftOrRight left currentState t b
+            MoveRight -> put $ tryLeftOrRight right currentState t b
             RotateR -> put (currentState { tetromino = Just $ rotateR t, move = NoMove } )
             MoveDown -> put $ tryMovingDown currentState t b
 
@@ -58,6 +58,15 @@ tryMovingDown game t b =
   in if (anyFull b (positions updatedTetromino)) 
     then game { board = drawTetrominoToBoard b t, tetromino = Nothing, move = NoMove } 
     else game { tetromino = Just updatedTetromino, move = NoMove }
+
+tryLeftOrRight :: (Tetromino -> Tetromino) -> TetrisGame -> Tetromino -> Board -> TetrisGame
+tryLeftOrRight move g t b =
+    let
+        updatedTetromino = move t
+        ps = positions updatedTetromino
+    in if isOutOfBounds b ps || anyFull b ps
+        then g { move = NoMove } 
+        else g { tetromino = Just updatedTetromino, move = NoMove }
 
 type RotationPoint = Position
 
@@ -75,10 +84,10 @@ rotateR t =
     rotationPoint = ps !! 0 -- the first element is the rotation point
   in t { positions = map (\p -> rightRotation p rotationPoint) ps }
 
-right :: Tetromino -> Tetromino -- TODO: Check bounds, wall kicks
+right :: Tetromino -> Tetromino -- TODO: wall kicks
 right tetromino = tetromino { positions = map (\(x,y) -> (x+1,y)) $ positions tetromino }
 
-left :: Tetromino -> Tetromino -- TODO: Check bounds, wall kicks
+left :: Tetromino -> Tetromino -- TODO: wall kicks
 left tetromino = tetromino { positions = map (\(x,y) -> (x-1,y)) $ positions tetromino }
 
 down :: Tetromino -> Tetromino

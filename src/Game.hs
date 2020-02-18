@@ -6,6 +6,7 @@ module Game
 , initBoard
 , newGame
 , anyFull
+, isOutOfBounds
 ) where
 
 import Tetromino
@@ -44,6 +45,15 @@ initBoard = array (0,11)
   , (11, array (0,4) [(0,FULL), (1,FULL), (2,FULL), (3,FULL), (4,FULL)])
   ] :: Board -- TODO: Simplify with list comprehension
 
+
+-- Checks if any of the passed positions is horizontally out of bounds 
+isOutOfBounds :: Board -> Positions -> Bool
+isOutOfBounds b ps = 
+    let
+        rightBound = snd $ bounds $ b ! 0 
+        xs = map fst ps
+    in any (\x -> x<0 || x > rightBound) xs 
+  
 -- Checks if any of the passed positions is marked as FULL on the board   
 anyFull :: Board -> Positions -> Bool
 anyFull board ps = any isAnyFull ps where
