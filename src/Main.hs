@@ -10,8 +10,7 @@ main = do gameLoop newGame
 gameLoop :: TetrisGame -> IO ()
 gameLoop game = do
   maybeInputChar <- timeout 1000000 getChar
-  let input = inputToMove maybeInputChar
-  updatedGame <- runTurn game { move = input}
+  updatedGame <- runTurn game { move = inputToMove maybeInputChar}
   putStr $ drawGame updatedGame
   gameLoop updatedGame
 
