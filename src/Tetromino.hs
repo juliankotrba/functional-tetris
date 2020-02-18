@@ -31,7 +31,13 @@ instance Enum Tetromino where
   toEnum 5 = defaultS
   toEnum 6 = defaultZ
 
-  fromEnum _ = 0 -- TODO
+  fromEnum (Tetromino I _) = 0
+  fromEnum (Tetromino O _) = 1
+  fromEnum (Tetromino T _) = 2
+  fromEnum (Tetromino J _) = 3
+  fromEnum (Tetromino L _) = 4
+  fromEnum (Tetromino S _) = 5
+  fromEnum (Tetromino Z _) = 6
 
 -- Default Tetrominos
 -- The rotation point of each tetromino is placed at index 0
