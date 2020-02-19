@@ -46,7 +46,7 @@ moveTetromino = do
             NoMove -> return ()
             MoveLeft -> put $ tryLeftOrRight left currentState t b
             MoveRight -> put $ tryLeftOrRight right currentState t b
-            RotateR -> put (currentState { tetromino = Just $ rotateR t, move = NoMove } )
+            RotateR -> put (currentState { tetromino = Just $ rotateR t, move = NoMove } ) -- TODO: Check for out of bounds
             MoveDown -> put $ tryMovingDown currentState t b
 
 -- Tries to move a tetromino down
