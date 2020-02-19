@@ -2,6 +2,7 @@ module Main where
 
 import GameLogic
 import Game 
+import Output
 import System.IO
 import System.Timeout
 import System.Console.ANSI

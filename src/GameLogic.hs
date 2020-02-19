@@ -1,13 +1,12 @@
 module GameLogic
 ( runTurn
-, drawGame
+, addTetrominoToBoard
 ) where
   
 import Control.Monad.State
 import System.Random
 import Data.Array
 import Data.List
-import Data.List.Split
 import Tetromino
 import Game
 
@@ -56,7 +55,7 @@ tryMovingDown game t b =
   let
     updatedTetromino = down t
   in if (anyFull b (positions updatedTetromino)) 
-    then game { board = drawTetrominoToBoard b t, tetromino = Nothing, move = NoMove } 
+    then game { board = addTetrominoToBoard b t, tetromino = Nothing, move = NoMove } 
     else game { tetromino = Just updatedTetromino, move = NoMove }
 
 tryLeftOrRight :: (Tetromino -> Tetromino) -> TetrisGame -> Tetromino -> Board -> TetrisGame
@@ -97,28 +96,13 @@ down tetromino =
   in 
     tetromino { positions = map (\(x,y) -> (x, y+1)) postions}
 
--- Output, TODO: Own module
+addTetrominoToBoard :: Board -> Tetromino -> Board
+addTetrominoToBoard b t = addTetrominoToBoardHelper b $ positions t 
 
-drawGame :: TetrisGame -> String
-drawGame game = let
-  mt = tetromino game
-  b = case mt of 
-    Just t -> drawTetrominoToBoard (board game) t
-    Nothing -> board game
-  lineSize = length $ elems $ b!0
-  list2d = chunksOf lineSize $ concat $ map elems $ elems b
-  in (unlines $ map lineToString list2d) ++ "\n"
-
-lineToString :: [FieldState] -> String
-lineToString fss = intercalate "" $ map (\fs -> if fs == FULL then "X" else " ") fss
-
-drawTetrominoToBoard :: Board -> Tetromino -> Board
-drawTetrominoToBoard b t = drawTetrominoToBoardHelper b $ positions t 
-
-drawTetrominoToBoardHelper :: Board -> Positions -> Board
-drawTetrominoToBoardHelper b [] = b
-drawTetrominoToBoardHelper b ((x,y):xs) = let
+addTetrominoToBoardHelper :: Board -> Positions -> Board
+addTetrominoToBoardHelper b [] = b
+addTetrominoToBoardHelper b ((x,y):xs) = let
   yRow = b ! y
   updatedRow = yRow // [(x, FULL)]
   updatedBoard = b // [(y, updatedRow)]
-  in drawTetrominoToBoardHelper updatedBoard xs 
+  in addTetrominoToBoardHelper updatedBoard xs 
