@@ -7,6 +7,7 @@ module Game
 , newGame
 , anyFull
 , isOutOfBounds
+, boardHeight
 ) where
 
 import Tetromino
@@ -43,8 +44,7 @@ initBoard = array (0,11)
   , (9, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (10, array (0,4) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY)])
   , (11, array (0,4) [(0,FULL), (1,FULL), (2,FULL), (3,FULL), (4,FULL)])
-  ] :: Board -- TODO: Simplify with list comprehension
-
+  ] :: Board -- TODO: Simplify with list comprehension  
 
 -- Checks if any of the passed positions is horizontally out of bounds 
 isOutOfBounds :: Board -> Positions -> Bool
@@ -62,3 +62,6 @@ anyFull board ps = any isAnyFull ps where
 -- Checks if the passed position is marked as FULL on the Board    
 isFull :: Board -> Position -> Bool
 isFull board (x,y) = board ! y ! x == FULL  
+
+boardHeight :: TetrisGame -> Int
+boardHeight g = snd $ bounds $ board g
