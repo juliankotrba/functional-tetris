@@ -8,6 +8,7 @@ import System.Timeout
 import System.Console.ANSI
 
 main = do 
+    setTitle "3 2 1 Tetris!"
     hSetBuffering stdout (BlockBuffering (Just 10)) 
     hSetEcho stdout False
     gameLoop newGame
