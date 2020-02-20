@@ -43,9 +43,9 @@ moveTetromino = do
           Nothing -> return ()
           Just t -> case (move currentState) of
             NoMove -> return ()
-            MoveLeft -> put $ tryLeftOrRight left currentState t b
-            MoveRight -> put $ tryLeftOrRight right currentState t b
-            RotateR -> put $ tryLeftOrRight rotateR currentState t b --(currentState { tetromino = Just $ rotateR t, move = NoMove } ) -- TODO: Check for out of bounds
+            MoveLeft -> put $ tryMove left currentState t b
+            MoveRight -> put $ tryMove right currentState t b
+            RotateR -> put $ tryMove rotateR currentState t b
             MoveDown -> put $ tryMovingDown currentState t b
 
 -- Tries to move a tetromino down
@@ -58,8 +58,8 @@ tryMovingDown game t b =
     then game { board = addTetrominoToBoard b t, tetromino = Nothing, move = NoMove } 
     else game { tetromino = Just updatedTetromino, move = NoMove }
 
-tryLeftOrRight :: (Tetromino -> Tetromino) -> TetrisGame -> Tetromino -> Board -> TetrisGame
-tryLeftOrRight move g t b =
+tryMove :: (Tetromino -> Tetromino) -> TetrisGame -> Tetromino -> Board -> TetrisGame
+tryMove move g t b =
     let
         updatedTetromino = move t
         ps = positions updatedTetromino
