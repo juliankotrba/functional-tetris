@@ -14,11 +14,18 @@ runTurn = execStateT resolveTurn
 
 resolveTurn :: StateT TetrisGame IO ()  
 resolveTurn = do
-    currentState <- get
+    checkGameOver
     moveTetromino
     spawnIfNeeded
     return ()
 
+checkGameOver :: StateT TetrisGame IO ()
+checkGameOver = do
+    currentState <- get
+    if isGameOver currentState 
+      then error "GAME OVER" -- TODO: Proper game over
+      else return ()
+    
 spawnIfNeeded :: StateT TetrisGame IO ()
 spawnIfNeeded = do
   currentState <- get
@@ -55,8 +62,10 @@ tryMovingDown game t b =
   let
     updatedTetromino = down t
     ps = positions updatedTetromino
+    currentVerticalCount = verticalCount game
+    currentHorizontalCount = horizontalCount game   
   in if (anyBeyondBottom b ps || anyFull b ps) 
-    then game { board = addTetrominoToBoard b t, tetromino = Nothing, move = NoMove } 
+    then game { board = addTetrominoToBoard b t, tetromino = Nothing, move = NoMove, horizontalCount = updateHorizontalCountVector currentHorizontalCount (positions t), verticalCount = updateVerticalCountVector currentVerticalCount (positions t) } 
     else game { tetromino = Just updatedTetromino, move = NoMove }
 
 tryMove :: (Tetromino -> Tetromino) -> TetrisGame -> Tetromino -> Board -> TetrisGame
