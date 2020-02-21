@@ -34,6 +34,8 @@ spawnIfNeeded = do
     Just t -> return ()
     Nothing -> spawnTetromino  
 
+-- TODO: Check if Tetromino spawns on another tetromino
+-- If this is the case -> game over
 spawnTetromino :: StateT TetrisGame IO ()
 spawnTetromino = do
         currentState <- get
