@@ -6,6 +6,7 @@ module Game
 , initBoard
 , newGame
 , anyFull
+, anyBeyondBottom
 , isOutOfBounds
 , boardHeight
 ) where
@@ -43,8 +44,16 @@ initBoard = array (0,11)
   , (8, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
   , (9, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
   , (10, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (11, array (0,9) [(0,FULL), (1,FULL), (2,FULL), (3,FULL), (4,FULL), (5,FULL), (6,FULL), (7,FULL), (8,FULL), (9,FULL)])
+  , (11, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
   ] :: Board -- TODO: Simplify with list comprehension  
+
+
+anyBeyondBottom :: Board -> Positions -> Bool
+anyBeyondBottom b ps = 
+    let
+        bottomBound = snd $ bounds b
+        ys = map snd ps
+    in any (> bottomBound) ys       
 
 -- Checks if any of the passed positions is horizontally out of bounds 
 isOutOfBounds :: Board -> Positions -> Bool

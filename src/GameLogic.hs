@@ -54,7 +54,8 @@ tryMovingDown :: TetrisGame -> Tetromino -> Board -> TetrisGame
 tryMovingDown game t b =
   let
     updatedTetromino = down t
-  in if (anyFull b (positions updatedTetromino)) 
+    ps = positions updatedTetromino
+  in if (anyBeyondBottom b ps || anyFull b ps) 
     then game { board = addTetrominoToBoard b t, tetromino = Nothing, move = NoMove } 
     else game { tetromino = Just updatedTetromino, move = NoMove }
 
