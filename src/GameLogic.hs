@@ -14,17 +14,9 @@ runTurn = execStateT resolveTurn
 
 resolveTurn :: StateT TetrisGame IO ()  
 resolveTurn = do
-    checkGameOver
     moveTetromino
     spawnIfNeeded
     return ()
-
-checkGameOver :: StateT TetrisGame IO ()
-checkGameOver = do
-    currentState <- get
-    if isGameOver currentState 
-      then error "GAME OVER" -- TODO: Proper game over
-      else return ()
     
 spawnIfNeeded :: StateT TetrisGame IO ()
 spawnIfNeeded = do
@@ -64,10 +56,12 @@ tryMovingDown game t b =
   let
     updatedTetromino = down t
     ps = positions updatedTetromino
-    currentVerticalCount = verticalCount game
     currentHorizontalCount = horizontalCount game   
   in if (anyBeyondBottom b ps || anyFull b ps) 
-    then game { board = addTetrominoToBoard b t, tetromino = Nothing, move = NoMove, horizontalCount = updateHorizontalCountVector currentHorizontalCount (positions t), verticalCount = updateVerticalCountVector currentVerticalCount (positions t) } 
+    then 
+      if (any (==0) (map snd (positions t))) -- Cannot move down and y position is still zero -> game over
+        then error "Game Over" 
+        else game { board = addTetrominoToBoard b t, tetromino = Nothing, move = NoMove, horizontalCount = updateHorizontalCountVector currentHorizontalCount (positions t) } 
     else game { tetromino = Just updatedTetromino, move = NoMove }
 
 tryMove :: (Tetromino -> Tetromino) -> TetrisGame -> Tetromino -> Board -> TetrisGame
@@ -113,8 +107,11 @@ addTetrominoToBoard b t = addTetrominoToBoardHelper b $ positions t
 
 addTetrominoToBoardHelper :: Board -> Positions -> Board
 addTetrominoToBoardHelper b [] = b
-addTetrominoToBoardHelper b ((x,y):xs) = let
-  yRow = b ! y
-  updatedRow = yRow // [(x, FULL)]
-  updatedBoard = b // [(y, updatedRow)]
-  in addTetrominoToBoardHelper updatedBoard xs 
+addTetrominoToBoardHelper b ((x,y):xs) 
+  | x<0 || y<0 = addTetrominoToBoardHelper b xs
+  | otherwise = addTetrominoToBoardHelper updatedBoard xs
+  where 
+    yRow = b ! y
+    updatedRow = yRow // [(x, FULL)]
+    updatedBoard = b // [(y, updatedRow)]
+  --in addTetrominoToBoardHelper updatedBoard xs 

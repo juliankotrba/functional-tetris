@@ -11,7 +11,6 @@ module Game
 , isOutOfBounds
 , boardHeight
 , updateHorizontalCountVector
-, updateVerticalCountVector
 ) where
 
 import Tetromino
@@ -28,10 +27,9 @@ data FieldState = EMPTY | FULL deriving (Eq, Show)
 data Move = RotateR | MoveLeft | MoveRight | MoveDown | NoMove deriving (Show)
 
 type HorizontalFullCount = V.Vector Int
-type VerticalFullCount = V.Vector Int
 
-initFullCountVector :: Int -> V.Vector Int
-initFullCountVector s = V.fromList $ take s $ repeat 0
+initHorizontalCountVector :: Int -> V.Vector Int
+initHorizontalCountVector s = V.fromList $ take s $ repeat 0
 
 
 data TetrisGame = TetrisGame
@@ -40,12 +38,11 @@ data TetrisGame = TetrisGame
   , tGenerator :: StdGen
   , move :: Move
   , horizontalCount :: HorizontalFullCount
-  , verticalCount :: VerticalFullCount
   } deriving (Show)
 
 -- Helper functions
 
-newGame = TetrisGame (Just defaultT) initBoard (mkStdGen 0) NoMove (initFullCountVector 12) (initFullCountVector 10) -- TODO: Start with random tetromino
+newGame = TetrisGame (Just defaultT) initBoard (mkStdGen 0) NoMove (initHorizontalCountVector 12) -- TODO: Start with random tetromino
 
 initBoard = array (0,11) 
   [ (0, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
@@ -65,10 +62,11 @@ initBoard = array (0,11)
 isGameOver :: TetrisGame -> Bool
 isGameOver g = 
     let
-        b = board g
-        boardHeight = (snd $ bounds b) + 1
-        verticalCountVector = verticalCount g 
-    in any (\i -> i > boardHeight) verticalCountVector   
+        mTetromino = tetromino g
+        ys = case mTetromino of
+            Nothing -> []
+            Just t -> map snd $ positions t
+    in any (<0) ys   
 
 anyBeyondBottom :: Board -> Positions -> Bool
 anyBeyondBottom b ps = 
@@ -105,14 +103,4 @@ updateHorizontalCountVector v ps =
         grouped = map (\(y,val)->(y, (v V.! y)+val)) $ -- calculate new value in vector
                     map (\y -> foldr (\(x1,y1) (x2,y2) -> (x1, y1+y2)) (0,0) y) $  -- add up groupings
                         groupBy (\a b -> fst a == fst b) ys -- group by x values (e.g. horizontal I tetromino)
-    in v V.// grouped
-
-updateVerticalCountVector :: HorizontalFullCount -> Positions -> HorizontalFullCount
-updateVerticalCountVector v ps = 
-    let 
-        xs = map (\x -> (x,1)) $ sort $ map fst ps
-        -- TODO: simplify
-        grouped = map (\(x,val)->(x, (v V.! x)+val)) $ -- calculate new value in vector
-                    map (\x -> foldr (\(x1,y1) (x2,y2) -> (x1, y1+y2)) (0,0) x) $  -- add up groupings
-                        groupBy (\a b -> fst a == fst b) xs -- group by x values (e.g. horizontal I tetromino)
     in v V.// grouped
