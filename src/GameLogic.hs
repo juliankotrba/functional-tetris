@@ -9,6 +9,7 @@ import Data.Array
 import Data.List
 import Tetromino
 import Game
+import qualified Data.Vector as V
 
 runTurn = execStateT resolveTurn
 
@@ -16,6 +17,7 @@ resolveTurn :: StateT TetrisGame IO ()
 resolveTurn = do
     moveTetromino
     spawnIfNeeded
+    checkFullRows
     return ()
     
 spawnIfNeeded :: StateT TetrisGame IO ()
@@ -25,6 +27,16 @@ spawnIfNeeded = do
   case mt of 
     Just t -> return ()
     Nothing -> spawnTetromino  
+
+checkFullRows :: StateT TetrisGame IO ()
+checkFullRows = do
+  currentState <- get
+  let width = boardWidth currentState
+  let currentHorizontalFullCount = horizontalCount currentState
+  let fullIndices = map fst $ filter (\(i, e) -> e >= width) (zip [0..] (V.toList currentHorizontalFullCount)) 
+  let updatedBoard = clearRows (board currentState) fullIndices
+  let updatedHorizontalCount = currentHorizontalFullCount V.// (map (\i->(i,0)) fullIndices)
+  put (currentState { board = updatedBoard, horizontalCount = updatedHorizontalCount })  
 
 -- TODO: Check if Tetromino spawns on another tetromino
 -- If this is the case -> game over
@@ -114,4 +126,10 @@ addTetrominoToBoardHelper b ((x,y):xs)
     yRow = b ! y
     updatedRow = yRow // [(x, FULL)]
     updatedBoard = b // [(y, updatedRow)]
-  --in addTetrominoToBoardHelper updatedBoard xs 
+
+clearRows :: Board -> [Int] -> Board  
+clearRows b indices = 
+  let
+    widthOuterBound = snd $ bounds $ (b ! 0)
+    emptyRow = listArray (0, widthOuterBound) $ take (10) $ repeat EMPTY
+  in b // (map (\i-> (i, emptyRow))) indices

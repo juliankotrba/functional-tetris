@@ -10,6 +10,7 @@ module Game
 , anyBeyondBottom
 , isOutOfBounds
 , boardHeight
+, boardWidth
 , updateHorizontalCountVector
 ) where
 
@@ -30,7 +31,6 @@ type HorizontalFullCount = V.Vector Int
 
 initHorizontalCountVector :: Int -> V.Vector Int
 initHorizontalCountVector s = V.fromList $ take s $ repeat 0
-
 
 data TetrisGame = TetrisGame
   { tetromino :: Maybe Tetromino
@@ -94,6 +94,9 @@ isFull board (x,y) = board ! y ! x == FULL
 
 boardHeight :: TetrisGame -> Int
 boardHeight g = snd $ bounds $ board g
+
+boardWidth :: TetrisGame -> Int
+boardWidth g = 1 + (snd $ bounds $ (board g) ! 0)
 
 updateHorizontalCountVector :: HorizontalFullCount -> Positions -> HorizontalFullCount
 updateHorizontalCountVector v ps = 
