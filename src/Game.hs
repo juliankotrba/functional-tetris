@@ -80,8 +80,12 @@ isOutOfBounds :: Board -> Positions -> Bool
 isOutOfBounds b ps = 
     let
         rightBound = snd $ bounds $ b ! 0 
+        bottomBound = snd $ bounds b
         xs = map fst ps
-    in any (\x -> x<0 || x > rightBound) xs 
+        ys = map snd ps
+    in 
+        any (\x -> x<0 || x > rightBound) xs || 
+        any (\y-> y>bottomBound || y<0) ys
   
 -- Checks if any of the passed positions is marked as FULL on the board   
 anyFull :: Board -> Positions -> Bool
