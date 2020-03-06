@@ -1,12 +1,14 @@
 module GameLogic
 ( runTurn
 , addTetrominoToBoard
+, moveDownVector
 ) where
   
 import Control.Monad.State
 import System.Random
 import Data.Array
 import Data.List
+import Data.Ord
 import Tetromino
 import Game
 import qualified Data.Vector as V
@@ -32,10 +34,9 @@ checkFullRows :: StateT TetrisGame IO ()
 checkFullRows = do
   currentState <- get
   let width = boardWidth currentState
-  let currentHorizontalFullCount = horizontalCount currentState
-  let fullIndices = map fst $ filter (\(i, e) -> e >= width) (zip [0..] (V.toList currentHorizontalFullCount)) 
-  let updatedBoard = clearRows (board currentState) fullIndices
-  let updatedHorizontalCount = currentHorizontalFullCount V.// (map (\i->(i,0)) fullIndices)
+  let moveDownV = moveDownVector (V.map (>=width) (horizontalCount currentState))
+  let updatedBoard = removeFullRows (board currentState) moveDownV 
+  let updatedHorizontalCount = calculateHorizontalCount updatedBoard
   put (currentState { board = updatedBoard, horizontalCount = updatedHorizontalCount })  
 
 -- TODO: Check if Tetromino spawns on another tetromino
@@ -133,3 +134,27 @@ clearRows b indices =
     widthOuterBound = snd $ bounds $ (b ! 0)
     emptyRow = listArray (0, widthOuterBound) $ take (10) $ repeat EMPTY
   in b // (map (\i-> (i, emptyRow))) indices
+
+-- TODO: Refactoring and proper documentation  
+-- V.Vector Int - vector containing the move down count for each element in board
+-- TODO: Fill first n rows with empty rows where n is number of full rows in b 
+removeFullRows :: Board -> V.Vector Int -> Board  
+removeFullRows b moveDownVector = 
+  let
+    indexedMoveDownList= V.toList $ V.indexed moveDownVector
+    -- create update array [(i, arrFB)]
+    updateList = map (\(i, m) -> ((11-i)+m, b ! (11-i))) indexedMoveDownList -- move row at index i down m times
+  in b // updateList
+
+moveDownVector ::  V.Vector Bool -> V.Vector Int
+moveDownVector hfc = moveDownVectorHelper (V.reverse hfc) (V.fromList $ take (V.length hfc) $ repeat 0) 0 0
+
+type Index = Int
+type CurrentMoveDownVector = V.Vector Int
+type CurrentMoveDownCount = Int
+moveDownVectorHelper :: V.Vector Bool -> CurrentMoveDownVector -> Index -> CurrentMoveDownCount -> V.Vector Int
+moveDownVectorHelper hfc cmdv i cmdc
+  | i >= V.length hfc = cmdv
+  | otherwise = if (hfc V.! i == True) 
+    then moveDownVectorHelper hfc (cmdv V.// [(i, cmdc)]) (i+1) (cmdc+1)
+    else moveDownVectorHelper hfc (cmdv V.// [(i, cmdc)]) (i+1) cmdc

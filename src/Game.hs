@@ -11,6 +11,7 @@ module Game
 , isOutOfBounds
 , boardHeight
 , boardWidth
+, calculateHorizontalCount
 , updateHorizontalCountVector
 ) where
 
@@ -101,6 +102,9 @@ boardHeight g = snd $ bounds $ board g
 
 boardWidth :: TetrisGame -> Int
 boardWidth g = 1 + (snd $ bounds $ (board g) ! 0)
+
+calculateHorizontalCount :: Board -> HorizontalFullCount
+calculateHorizontalCount b = V.fromList $ map (\a -> length $ filter (==FULL) (elems a)) (elems b)
 
 updateHorizontalCountVector :: HorizontalFullCount -> Positions -> HorizontalFullCount
 updateHorizontalCountVector v ps = 
