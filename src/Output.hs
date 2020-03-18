@@ -18,7 +18,7 @@ drawGame game = let
   lineSize = length $ elems $ b!0
   list2d = chunksOf lineSize $ concat $ map elems $ elems b
   width = boardWidth game
-  in (scoreLine 2) ++
+  in (scoreLine $ scoring game) ++
       topLeftCorner ++ (horizontalFieldSeparator width) ++ topRightCorner ++"\n" ++ 
         (unlines $ map lineToString list2d) ++
           bottomLeftCorner ++ (horizontalFieldSeparator width) ++ bottomRightCorner
@@ -30,8 +30,8 @@ bottomRightCorner = [chr 0x2518]
 topRightCorner = [chr 0x2510]
 topLeftCorner = [chr 0x250c]
 
-scoreLine :: Int -> String
-scoreLine score = "Score: " ++ (show score) ++ "\n"
+scoreLine :: Scoring -> String
+scoreLine scoring = "Score: " ++ (show $ score scoring) ++ "\n"
 
 horizontalFieldSeparator :: Int -> String
 horizontalFieldSeparator boardWidth = concat $ replicate boardWidth horizontalLine
