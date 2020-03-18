@@ -15,7 +15,7 @@ main = do
 
 gameLoop :: TetrisGame -> IO ()
 gameLoop game = do
-  maybeInputChar <- timeout 1000000 getChar
+  maybeInputChar <- timeout 500000 getChar
   updatedGame <- runTurn game { move = inputToMove maybeInputChar}
   putStr $ drawGame updatedGame
   cursorUpLine $ (boardHeight $ board updatedGame) + 3
