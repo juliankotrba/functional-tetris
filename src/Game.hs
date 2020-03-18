@@ -3,6 +3,7 @@ module Game
 , FieldState (..)
 , Move (..)
 , TetrisGame (..)
+, Scoring (..)
 , initBoard
 , newGame
 , isGameOver
@@ -13,6 +14,7 @@ module Game
 , boardWidth
 , calculateHorizontalCount
 , updateHorizontalCountVector
+, calculateScore
 ) where
 
 import Tetromino
@@ -30,6 +32,11 @@ data Move = RotateR | MoveLeft | MoveRight | MoveDown | NoMove deriving (Show)
 
 type HorizontalFullCount = V.Vector Int
 
+data Scoring = Scoring { score :: Int } deriving Show-- TODO: Combos, back-to-back, etc.
+
+instance Semigroup Scoring where
+    (<>) s1 s2 = Scoring $ (score s1) + (score s2)
+
 initHorizontalCountVector :: Int -> V.Vector Int
 initHorizontalCountVector s = V.fromList $ take s $ repeat 0
 
@@ -39,11 +46,13 @@ data TetrisGame = TetrisGame
   , tGenerator :: StdGen
   , move :: Move
   , horizontalCount :: HorizontalFullCount
+  , scoring :: Scoring
   } deriving (Show)
 
 -- Helper functions
 
-newGame = TetrisGame (Just defaultT) initBoard (mkStdGen 0) NoMove (initHorizontalCountVector 12) -- TODO: Start with random tetromino
+initScoring = Scoring 0
+newGame = TetrisGame (Just defaultT) initBoard (mkStdGen 0) NoMove (initHorizontalCountVector 12) initScoring -- TODO: Start with random tetromino
 
 initBoard = array (0,11) 
   [ (0, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
@@ -97,11 +106,11 @@ anyFull board ps = any isAnyFull ps where
 isFull :: Board -> Position -> Bool
 isFull board (x,y) = board ! y ! x == FULL  
 
-boardHeight :: TetrisGame -> Int
-boardHeight g = snd $ bounds $ board g
+boardHeight :: Board -> Int
+boardHeight b = snd $ bounds $ b
 
-boardWidth :: TetrisGame -> Int
-boardWidth g = 1 + (snd $ bounds $ (board g) ! 0)
+boardWidth :: Board -> Int
+boardWidth b = 1 + (snd $ bounds $ b ! 0)
 
 calculateHorizontalCount :: Board -> HorizontalFullCount
 calculateHorizontalCount b = V.fromList $ map (\a -> length $ filter (==FULL) (elems a)) (elems b)
@@ -115,3 +124,11 @@ updateHorizontalCountVector v ps =
                     map (\y -> foldr (\(x1,y1) (x2,y2) -> (x1, y1+y2)) (0,0) y) $  -- add up groupings
                         groupBy (\a b -> fst a == fst b) ys -- group by x values (e.g. horizontal I tetromino)
     in v V.// grouped
+
+calculateScore :: TetrisGame -> Scoring
+calculateScore game = 
+    let
+        horizontalCount_ = horizontalCount game
+        width = boardWidth $ board game
+        fullRowCount = V.length $ V.filter (== width) horizontalCount_
+    in Scoring (if (fullRowCount == 4) then 800 else (100*fullRowCount))
