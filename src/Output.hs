@@ -17,7 +17,7 @@ drawGame game = let
     Nothing -> board game
   lineSize = length $ elems $ b!0
   list2d = chunksOf lineSize $ concat $ map elems $ elems b
-  width = boardWidth game
+  width = boardWidth b
   in (scoreLine $ scoring game) ++
       topLeftCorner ++ (horizontalFieldSeparator width) ++ topRightCorner ++"\n" ++ 
         (unlines $ map lineToString list2d) ++

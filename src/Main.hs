@@ -18,7 +18,7 @@ gameLoop game = do
   maybeInputChar <- timeout 1000000 getChar
   updatedGame <- runTurn game { move = inputToMove maybeInputChar}
   putStr $ drawGame updatedGame
-  cursorUpLine $ (boardHeight updatedGame) + 3
+  cursorUpLine $ (boardHeight $ board updatedGame) + 3
   gameLoop updatedGame
 
 inputToMove :: Maybe Char -> Move

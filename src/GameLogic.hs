@@ -19,7 +19,8 @@ resolveTurn :: StateT TetrisGame IO ()
 resolveTurn = do
     moveTetromino
     spawnIfNeeded
-    checkFullRows
+    updateScore
+    handleFullRows
     return ()
     
 spawnIfNeeded :: StateT TetrisGame IO ()
@@ -30,10 +31,16 @@ spawnIfNeeded = do
     Just t -> return ()
     Nothing -> spawnTetromino  
 
-checkFullRows :: StateT TetrisGame IO ()
-checkFullRows = do
+updateScore :: StateT TetrisGame IO ()
+updateScore = do
   currentState <- get
-  let width = boardWidth currentState
+  let currentScoring = scoring currentState
+  put (currentState { scoring = (<>) currentScoring (calculateScore currentState) })  
+
+handleFullRows :: StateT TetrisGame IO ()
+handleFullRows = do
+  currentState <- get
+  let width = boardWidth $ board currentState
   let moveDownV = moveDownVector (V.map (>=width) (horizontalCount currentState))
   let updatedBoard = removeFullRows (board currentState) moveDownV 
   let updatedHorizontalCount = calculateHorizontalCount updatedBoard
@@ -142,8 +149,8 @@ removeFullRows :: Board -> V.Vector Int -> Board
 removeFullRows b moveDownVector = 
   let
     indexedMoveDownList= V.toList $ V.indexed moveDownVector
-    -- create update array [(i, arrFB)]
-    updateList = map (\(i, m) -> ((11-i)+m, b ! (11-i))) indexedMoveDownList -- move row at index i down m times
+    height = boardHeight b
+    updateList = map (\(i, m) -> ((height-i)+m, b ! (height-i))) indexedMoveDownList -- move row at index i down m times
   in b // updateList
 
 moveDownVector ::  V.Vector Bool -> V.Vector Int
@@ -152,6 +159,7 @@ moveDownVector hfc = moveDownVectorHelper (V.reverse hfc) (V.fromList $ take (V.
 type Index = Int
 type CurrentMoveDownVector = V.Vector Int
 type CurrentMoveDownCount = Int
+
 moveDownVectorHelper :: V.Vector Bool -> CurrentMoveDownVector -> Index -> CurrentMoveDownCount -> V.Vector Int
 moveDownVectorHelper hfc cmdv i cmdc
   | i >= V.length hfc = cmdv
