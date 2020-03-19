@@ -54,11 +54,11 @@ data TetrisGame = TetrisGame
 initScoring = Scoring 0
 newGame = TetrisGame (Just defaultT) initBoard (mkStdGen 0) NoMove (initHorizontalCountVector 12) initScoring -- TODO: Start with random tetromino
 
-width = 10
-height = 15
+defaultWidth = 10
+defaultHeight = 15
 
-initBoard = array (0, height-1) [ (i, initBoardRow) | i <- [0..(height-1)]] :: Board
-initBoardRow = array (0, width-1) [ (i,EMPTY) | i <- [0..(width-1)]]
+initBoard = array (0, defaultHeight-1) [ (i, initBoardRow) | i <- [0..(defaultHeight-1)]] :: Board
+initBoardRow = array (0, defaultWidth-1) [ (i,EMPTY) | i <- [0..(defaultWidth-1)]]
 
 isGameOver :: TetrisGame -> Bool
 isGameOver g = 
