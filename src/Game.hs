@@ -54,20 +54,11 @@ data TetrisGame = TetrisGame
 initScoring = Scoring 0
 newGame = TetrisGame (Just defaultT) initBoard (mkStdGen 0) NoMove (initHorizontalCountVector 12) initScoring -- TODO: Start with random tetromino
 
-initBoard = array (0,11) 
-  [ (0, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (1, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (2, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (3, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (4, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (5, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (6, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (7, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (8, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (9, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (10, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  , (11, array (0,9) [(0,EMPTY), (1,EMPTY), (2,EMPTY), (3,EMPTY), (4,EMPTY), (5,EMPTY), (6,EMPTY), (7,EMPTY), (8,EMPTY), (9,EMPTY)])
-  ] :: Board -- TODO: Simplify with list comprehension  
+width = 10
+height = 15
+
+initBoard = array (0, height-1) [ (i, initBoardRow) | i <- [0..(height-1)]] :: Board
+initBoardRow = array (0, width-1) [ (i,EMPTY) | i <- [0..(width-1)]]
 
 isGameOver :: TetrisGame -> Bool
 isGameOver g = 
